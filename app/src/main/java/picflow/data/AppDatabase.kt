@@ -5,11 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import picflow.model.Album
+import picflow.model.Imagen
 
-@Database(entities = [Album::class], version = 1, exportSchema = false)
+@Database(entities = [Album::class, Imagen::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun albumDao(): AlbumDao
+    abstract fun ImagenDao(): ImagenDao
 
     companion object {
         @Volatile
@@ -22,7 +24,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "picflow.db"
-                ).build().also { instancia = it }
+                )
+                    .fallbackToDestructiveMigration()
+                    .build().also { instancia = it }
             }
     }
 }
