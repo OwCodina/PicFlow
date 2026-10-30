@@ -6,8 +6,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import picflow.model.Album
 
-/** Único punto de acceso a los datos: el ViewModel no conoce Room, solo este repositorio. */
-class AlbumRepository(private val dao: AlbumDao, private val imagenDao: ImagenDao) {
+/** Único punto de acceso a los álbumes: el ViewModel no conoce Room, solo este repositorio. */
+class AlbumRepository(
+    private val dao: AlbumDao,
+    private val imagenDao: ImagenDao
+) {
 
     val albumes: Flow<List<Album>> = dao.observarTodos()
 
@@ -18,17 +21,25 @@ class AlbumRepository(private val dao: AlbumDao, private val imagenDao: ImagenDa
     suspend fun actualizar(album: Album) = dao.actualizar(album)
 
     suspend fun eliminar(album: Album) {
+        // Primero obtenemos las fotos del álbum.
+        val fotos = imagenDao.obtenerPorAlbum(album.id)
+
+        // Después eliminamos el álbum.
         dao.eliminar(album)
-        // Si el álbum tenía foto, también se borra el archivo para no dejar basura
+
+        // Eliminamos la portada y los archivos de las fotografías.
         album.portadaPath?.let { borrarArchivo(it) }
+
         fotos.forEach { foto ->
             borrarArchivo(foto.rutaOriginal)
             foto.rutaEditada?.let { borrarArchivo(it) }
         }
     }
-    
+
     /** Borra un archivo de foto del almacenamiento de la app. */
     suspend fun borrarArchivo(ruta: String) {
-        withContext(Dispatchers.IO) { File(ruta).delete() }
+        withContext(Dispatchers.IO) {
+            File(ruta).delete()
+        }
     }
 }
