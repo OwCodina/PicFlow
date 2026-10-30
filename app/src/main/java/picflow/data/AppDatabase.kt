@@ -11,8 +11,7 @@ import picflow.model.Imagen
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun albumDao(): AlbumDao
-    abstract fun ImagenDao(): ImagenDao
-
+    abstract fun imagenDao(): ImagenDao
     companion object {
         @Volatile
         private var instancia: AppDatabase? = null
