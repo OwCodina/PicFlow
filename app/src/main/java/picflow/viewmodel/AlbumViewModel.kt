@@ -47,6 +47,11 @@ class AlbumViewModel(private val repository: AlbumRepository) : ViewModel() {
     fun prepararNuevo() {
         uiState = AlbumUiState()
     }
+    
+    /** Descarta los cambios y limpia el formulario al salir sin guardar. */
+    fun descartarFormulario() {
+        uiState = AlbumUiState()
+    }
 
     /** Carga un álbum existente en el formulario para editarlo. */
     fun cargarParaEditar(id: Int) {
