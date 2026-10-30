@@ -12,5 +12,6 @@ data class AlbumUiState(
     val errorNombre: String? = null,
     val errorDescripcion: String? = null,
     val errorTipo: String? = null,
+    val errorGeneral: String? = null,
     val mensaje: String? = null
 )
