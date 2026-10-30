@@ -1,24 +1,28 @@
 package picflow.viewmodel
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import picflow.data.AlbumRepository
 import picflow.data.FakeAlbumDao
+import picflow.data.FakeImagenDao
 
 class AlbumViewModelTest {
 
     @get:Rule
     val mainRule = MainDispatcherRule()
 
-    private fun nuevoVm() = AlbumViewModel(AlbumRepository(FakeAlbumDao()))
+    private fun nuevoVm() =
+        AlbumViewModel(AlbumRepository(FakeAlbumDao(), FakeImagenDao()))
 
-    private fun vmConDatos(nombre: String, tipo: String = "Viajes") = nuevoVm().apply {
-        actualizarNombre(nombre)
-        actualizarTipo(tipo)
-    }
+    private fun vmConDatos(nombre: String, tipo: String = "Viajes") =
+        nuevoVm().apply {
+            actualizarNombre(nombre)
+            actualizarTipo(tipo)
+        }
 
     /** Ejecuta guardar() y devuelve el id si se guardó, o null si hubo errores. */
     private fun AlbumViewModel.guardarYObtenerId(): Int? {
@@ -116,5 +120,44 @@ class AlbumViewModelTest {
         vm.eliminar(album) {}
 
         assertEquals(0, vm.albumes.value.size)
+    }
+
+    @Test
+    fun si_falla_la_base_de_datos_el_boton_se_libera_y_se_muestra_error() {
+        val dao = FakeAlbumDao().apply { fallarAlInsertar = true }
+        val vm = AlbumViewModel(AlbumRepository(dao, FakeImagenDao())).apply {
+            actualizarNombre("Fotos")
+            actualizarTipo("Viajes")
+        }
+
+        assertNull(vm.guardarYObtenerId())
+
+        assertFalse(vm.uiState.guardando)
+        assertNotNull(vm.uiState.errorGeneral)
+        assertEquals("Fotos", vm.uiState.nombre)
+        assertEquals(0, vm.albumes.value.size)
+    }
+
+    @Test
+    fun descartar_formulario_limpia_el_estado() {
+        val vm = vmConDatos("Sin guardar")
+        vm.actualizarDescripcion("texto")
+
+        vm.descartarFormulario()
+
+        assertEquals("", vm.uiState.nombre)
+        assertEquals("", vm.uiState.descripcion)
+        assertNull(vm.uiState.editandoId)
+    }
+
+    @Test
+    fun consumir_mensaje_limpia_el_mensaje_de_exito() {
+        val vm = vmConDatos("Verano")
+        vm.guardarYObtenerId()
+        assertNotNull(vm.uiState.mensaje)
+
+        vm.consumirMensaje()
+
+        assertNull(vm.uiState.mensaje)
     }
 }
